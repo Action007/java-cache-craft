@@ -9,7 +9,7 @@ public class LfuEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
   @Override
   public K selectVictim(Map<K, CacheEntry<V>> entries) {
     return entries.entrySet().stream().min(Comparator
-        .comparing((Map.Entry<K, CacheEntry<V>> entry) -> entry.getValue().getAccessCount())
+        .comparing((Map.Entry<K, CacheEntry<V>> entry) -> entry.getValue().getAccessCount().get())
         .thenComparing((Map.Entry<K, CacheEntry<V>> entry) -> entry.getValue().getLastAccessTime()))
         .map(Map.Entry::getKey).orElse(null);
   }

@@ -1,18 +1,20 @@
 package com.cachecraft.entry;
 
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CacheEntry<V> {
   private V value;
   private Instant creationTime;
-  private Instant lastAccessTime;
-  private int accessCount = 0;
+  private volatile Instant lastAccessTime;
+  private AtomicInteger accessCount;
   private int sizeWeight;
 
   public CacheEntry(V value) {
     this.value = value;
     this.creationTime = Instant.now();
     this.lastAccessTime = this.creationTime;
+    this.accessCount = new AtomicInteger(0);
     this.sizeWeight = 1;
   }
 
@@ -32,13 +34,13 @@ public class CacheEntry<V> {
     return this.sizeWeight;
   }
 
-  public int getAccessCount() {
+  public AtomicInteger getAccessCount() {
     return accessCount;
   }
 
   public void recordAccess() {
     this.lastAccessTime = Instant.now();
-    this.accessCount++;
+    this.accessCount.incrementAndGet();
   }
 
   public boolean isExpired(long ttlMillis) {

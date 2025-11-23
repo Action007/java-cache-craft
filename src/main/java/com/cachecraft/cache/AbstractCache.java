@@ -31,7 +31,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
       result = Optional.empty();
     } else if (entry.isExpired(ttl)) {
       cache.remove(key);
-      return Optional.empty();
+      result = Optional.empty();
     } else {
       entry.recordAccess();
       result = Optional.of(entry.getValue());
@@ -57,9 +57,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
           cache.remove(victim);
         }
       }
+      cache.put(key, new CacheEntry<V>(value));
     }
 
-    cache.put(key, new CacheEntry<V>(value));
     afterPut(key, value);
   };
 
