@@ -9,7 +9,6 @@ public class CacheEntry<V> {
   private int accessCount = 0;
   private int sizeWeight;
 
-
   public CacheEntry(V value) {
     this.value = value;
     this.creationTime = Instant.now();
@@ -40,5 +39,16 @@ public class CacheEntry<V> {
   public void recordAccess() {
     this.lastAccessTime = Instant.now();
     this.accessCount++;
+  }
+
+  public boolean isExpired(long ttlMillis) {
+    Instant now = Instant.now();
+    if (ttlMillis == -1 || ttlMillis == 0) {
+      return false;
+    }
+    if (now.toEpochMilli() - creationTime.toEpochMilli() > ttlMillis) {
+      return true;
+    }
+    return false;
   }
 }

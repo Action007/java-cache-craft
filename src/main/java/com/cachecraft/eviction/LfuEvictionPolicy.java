@@ -1,4 +1,4 @@
-package com.cachecraft.cache.eviction;
+package com.cachecraft.eviction;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -11,7 +11,6 @@ public class LfuEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
     return entries.entrySet().stream().min(Comparator
         .comparing((Map.Entry<K, CacheEntry<V>> entry) -> entry.getValue().getAccessCount())
         .thenComparing((Map.Entry<K, CacheEntry<V>> entry) -> entry.getValue().getLastAccessTime()))
-        .map(Map.Entry::getKey)
-        .orElseThrow(() -> new IllegalStateException("Cannot select victim from empty entries"));
+        .map(Map.Entry::getKey).orElse(null);
   }
 }

@@ -1,4 +1,4 @@
-package com.cachecraft.cache.eviction;
+package com.cachecraft.eviction;
 
 import java.util.Map;
 import com.cachecraft.entry.CacheEntry;
