@@ -1,6 +1,5 @@
 package com.cachecraft.cache;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,14 +9,12 @@ import com.cachecraft.eviction.EvictionPolicy;
 public abstract class AbstractCache<K, V> implements Cache<K, V> {
   private final ConcurrentHashMap<K, CacheEntry<V>> cache;
   private final EvictionPolicy<K, V> evictionPolicy;
-  private final int maxSize;
   private final long ttl;
 
   public AbstractCache(EvictionPolicy<K, V> evictionPolicy, int maxSize, long ttl) {
     this.cache = new ConcurrentHashMap<>();
     this.ttl = ttl;
     this.evictionPolicy = evictionPolicy;
-    this.maxSize = maxSize;
   }
 
   @Override
@@ -49,19 +46,22 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     beforePut(key, value);
 
     synchronized (this) {
-      if (cache.size() > 0) {
-        while (cache.size() >= maxSize && !cache.containsKey(key)) {
-          K victim = evictionPolicy.selectVictim(cache);
-          if (victim == null)
-            break;
-          cache.remove(victim);
+      int attempts = 0;
+      // Keep evicting while policy says we should
+      while (attempts++ < 10) {
+        K victim = evictionPolicy.selectVictim(cache);
+        if (victim == null) {
+          break; // Policy says no eviction needed
         }
+        cache.remove(victim);
+        afterEviction(victim); // Hook for logging
       }
+
       cache.put(key, new CacheEntry<V>(value));
     }
 
     afterPut(key, value);
-  };
+  }
 
   @Override
   public void remove(K key) {
@@ -83,6 +83,14 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     return cache.containsKey(key);
   }
 
+  protected ConcurrentHashMap<K, CacheEntry<V>> getEntries() {
+    return cache;
+  }
+
+  protected int calculateTotalWeight() {
+    return cache.values().stream().mapToInt(CacheEntry::getSizeWeight).sum();
+  }
+
   protected void beforeGet(K key) {}
 
   protected void afterGet(K key, Optional<V> result) {}
@@ -90,4 +98,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
   protected void beforePut(K key, V value) {}
 
   protected void afterPut(K key, V value) {}
+
+  protected void afterEviction(K key) {}
 }
